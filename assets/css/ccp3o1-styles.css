@@ -1,0 +1,17 @@
+.ccp3o1-carousel {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 8px;
+}
+.ccp3o1-carousel .slick-slide {
+    margin: 0 var(--ccp3o1-gap, 10px);
+}
+.ccp3o1-carousel .slick-list {
+    margin: 0 calc(-1 * var(--ccp3o1-gap, 10px));
+}
+.ccp3o1-carousel img, .ccp3o1-carousel video {
+    display: block;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

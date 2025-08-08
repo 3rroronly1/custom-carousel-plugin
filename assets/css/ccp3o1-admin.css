@@ -1,0 +1,103 @@
+.ccp3o1-premium-wrap {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.ccp3o1-premium-wrap h1 {
+    display: flex;
+    align-items: center;
+}
+.ccp3o1-donate {
+    margin: 20px 0;
+    text-align: center;
+}
+.ccp3o1-donate-button {
+    display: inline-flex;
+    align-items: center;
+    background: #f5a623;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+.ccp3o1-donate-button:hover {
+    background: #e69500;
+}
+.ccp3o1-donate-button .dashicons {
+    margin-right: 5px;
+}
+.ccp3o1-form-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+.ccp3o1-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+.ccp3o1-input {
+    width: 100%;
+    max-width: 200px;
+    padding: 8px;
+    border-radius: 4px;
+}
+.ccp3o1-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+.ccp3o1-submit-button {
+    background: #0073aa;
+    color: #fff;
+}
+.ccp3o1-delete-button {
+    background: #d63638;
+    color: #fff;
+}
+.ccp3o1-reset-button {
+    background: #ff9800;
+    color: #fff;
+}
+.ccp3o1-no-items {
+    color: #666;
+    font-style: italic;
+}
+.ccp3o1-footer {
+    text-align: center;
+    color: #666;
+}
+.ccp3o1-footer .dashicons-heart {
+    color: #d63638;
+}
+.ccp3o1-media-list img, .ccp3o1-media-list video {
+    max-width: 100px;
+    margin-right: 10px;
+    border-radius: 4px;
+}
+#ccp3o1-media-preview {
+    margin-bottom: 10px;
+}
+#ccp3o1-media-preview img, #ccp3o1-media-preview video {
+    max-width: 100px;
+    margin-right: 10px;
+    border-radius: 4px;
+}
+.ccp3o1-delete-form {
+    margin-top: 10px;
+}
+.ccp3o1-reset-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
