@@ -146,5 +146,7 @@ This plugin is licensed under the GPLv2 or later.
 Credits
 
 Author: 3rrorOnly1
+
 Slick Slider: Ken Wheeler (MIT License)
+
 Built with ❤️ for the WordPress community.
