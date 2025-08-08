@@ -121,22 +121,6 @@ Go to Plugins > Add New > Upload Plugin.
 Click Choose File, select custom-carousel-plugin.zip, and click Install Now.
 Activate the plugin after installation.
 
-Directory Structure
-custom-carousel-plugin/
-├── assets/
-│   ├── css/
-│   │   ├── ccp3o1-styles.css
-│   │   ├── ccp3o1-admin.css
-│   ├── js/
-│   │   ├── ccp3o1-scripts.js
-│   │   ├── ccp3o1-admin.js
-│   ├── slick/
-│   │   ├── slick.css
-│   │   ├── slick-theme.css
-│   │   ├── slick.min.js
-├── custom-carousel-plugin.php
-├── readme.md
-
 Requirements
 
 WordPress: Version 5.0 or higher (tested up to 6.6+).
