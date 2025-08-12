@@ -20,6 +20,8 @@ function ccp3o1_enqueue_scripts() {
     wp_enqueue_script('ccp3o1-slick-js', plugins_url('assets/slick/slick.min.js', __FILE__), ['jquery'], '1.8.1', true);
     wp_enqueue_style('ccp3o1-styles', plugins_url('assets/css/ccp3o1-styles.css', __FILE__), [], '1.8');
     wp_enqueue_script('ccp3o1-scripts', plugins_url('assets/js/ccp3o1-scripts.js', __FILE__), ['jquery', 'ccp3o1-slick-js'], '1.8', true);
+    // Ensure dashicons for arrows on frontend
+    wp_enqueue_style('dashicons');
 }
 add_action('wp_enqueue_scripts', 'ccp3o1_enqueue_scripts');
 
@@ -54,9 +56,7 @@ add_action('admin_menu', 'ccp3o1_admin_menu');
 function ccp3o1_admin_page() {
     global $wpdb;
     // Prevent caching
-    header('Cache-Control: no-cache, no-store, must-revalidate');
-    header('Pragma: no-cache');
-    header('Expires: 0');
+    // Headers removed to avoid issues in admin rendering
 
     // Handle manual reset
     if (isset($_POST['ccp3o1_reset_carousels']) && check_admin_referer('ccp3o1_reset_carousels_nonce', 'ccp3o1_reset_nonce')) {
@@ -68,6 +68,9 @@ function ccp3o1_admin_page() {
 
     if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true' && !get_settings_errors()) {
         add_settings_error('ccp3o1_messages', 'ccp3o1_success', 'Carousel saved successfully!', 'success');
+    }
+    if (isset($_GET['ccp3o1_action']) && $_GET['ccp3o1_action'] === 'updated' && !get_settings_errors()) {
+        add_settings_error('ccp3o1_messages', 'ccp3o1_update_success', 'Carousel updated successfully!', 'success');
     }
     if (isset($_GET['ccp3o1_action']) && $_GET['ccp3o1_action'] === 'delete' && !get_settings_errors()) {
         add_settings_error('ccp3o1_messages', 'ccp3o1_delete_success', 'Carousel deleted successfully!', 'success');
@@ -89,6 +92,77 @@ function ccp3o1_admin_page() {
             submit_button('Save Carousel', 'primary', 'submit', true, ['class' => 'ccp3o1-submit-button']);
             ?>
         </form>
+        <?php
+        // Edit existing carousel form (if requested)
+        if (isset($_GET['edit'])) {
+            $edit_id = sanitize_text_field(wp_unslash($_GET['edit']));
+            $all_carousels = get_option('ccp3o1_carousels', []);
+            if (is_array($all_carousels) && isset($all_carousels[$edit_id])) {
+                $c = $all_carousels[$edit_id];
+                $items = isset($c['items']) && is_array($c['items']) ? array_map('absint', $c['items']) : [];
+                $dimensions = isset($c['dimensions']) ? $c['dimensions'] : '500x800';
+                $visible_items = isset($c['visible_items']) ? absint($c['visible_items']) : 3;
+                $speed = isset($c['speed']) ? absint($c['speed']) : 300;
+                $gap = isset($c['gap']) ? absint($c['gap']) : 10;
+                $gap_color = isset($c['gap_color']) ? $c['gap_color'] : '#ffffff';
+                $smooth = !empty($c['smooth']) ? 1 : 0;
+                $items_value = implode(',', $items);
+                ?>
+                <div id="ccp3o1-carousel-edit" class="ccp3o1-form-card">
+                    <h2><span class="dashicons dashicons-edit"></span> Edit Carousel</h2>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="ccp3o1-edit-form">
+                        <input type="hidden" name="action" value="ccp3o1_update_carousel" />
+                        <input type="hidden" name="carousel_id" value="<?php echo esc_attr($edit_id); ?>" />
+                        <?php wp_nonce_field('ccp3o1_update_carousel_nonce', 'ccp3o1_update_nonce'); ?>
+
+                        <p><strong><span class="dashicons dashicons-format-gallery"></span> Edit Media (Images/Videos):</strong></p>
+                        <input type="hidden" id="ccp3o1-edit-media-ids" name="ccp3o1_edit_carousel[items]" value="<?php echo esc_attr($items_value); ?>">
+                        <div id="ccp3o1-edit-media-preview">
+                            <?php
+                            foreach ($items as $item_id) {
+                                $url = wp_get_attachment_url($item_id);
+                                if (!$url) { continue; }
+                                $type = wp_check_filetype($url);
+                                if (strpos($type['type'], 'image') !== false) {
+                                    echo '<img src="' . esc_url($url) . '" style="max-width:100px; margin:5px;" />';
+                                } elseif (strpos($type['type'], 'video') !== false) {
+                                    echo '<video src="' . esc_url($url) . '" style="max-width:100px; margin:5px;" controls></video>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        <button type="button" id="ccp3o1-edit-add-media" class="button ccp3o1-button"><span class="dashicons dashicons-plus-alt"></span> Update Media</button>
+
+                        <p><strong><span class="dashicons dashicons-editor-expand"></span> Dimensions (width x height):</strong></p>
+                        <input type="text" name="ccp3o1_edit_carousel[dimensions]" placeholder="e.g., 500x800" value="<?php echo esc_attr($dimensions); ?>" class="ccp3o1-input">
+
+                        <p><strong><span class="dashicons dashicons-visibility"></span> Visible Items:</strong></p>
+                        <input type="number" name="ccp3o1_edit_carousel[visible_items]" value="<?php echo esc_attr($visible_items); ?>" min="1" max="10" class="ccp3o1-input">
+
+                        <p><strong><span class="dashicons dashicons-clock"></span> Speed (ms):</strong></p>
+                        <input type="number" name="ccp3o1_edit_carousel[speed]" value="<?php echo esc_attr($speed); ?>" min="100" max="5000" class="ccp3o1-input">
+
+                        <p><strong><span class="dashicons dashicons-align-center"></span> Gap Between Items (px):</strong></p>
+                        <input type="number" name="ccp3o1_edit_carousel[gap]" value="<?php echo esc_attr($gap); ?>" min="0" max="100" class="ccp3o1-input">
+
+                        <p><strong><span class="dashicons dashicons-art"></span> Gap Color:</strong></p>
+                        <input type="text" name="ccp3o1_edit_carousel[gap_color]" class="ccp3o1-color-picker" value="<?php echo esc_attr($gap_color); ?>">
+
+                        <p><strong><span class="dashicons dashicons-performance"></span> Smooth Carousel:</strong></p>
+                        <label><input type="checkbox" name="ccp3o1_edit_carousel[smooth]" value="1" <?php checked(1, $smooth); ?> /> Enable smoother transitions</label>
+
+                        <?php submit_button('Update Carousel', 'primary', 'submit', true, ['class' => 'ccp3o1-submit-button']); ?>
+                    </form>
+                </div>
+                <script>
+                    jQuery(document).ready(function($) {
+                        $('.ccp3o1-color-picker').wpColorPicker();
+                    });
+                </script>
+                <?php
+            }
+        }
+        ?>
         <div id="ccp3o1-carousel-list">
             <h2><span class="dashicons dashicons-list-view"></span> Existing Carousels</h2>
             <?php ccp3o1_display_carousels(); ?>
@@ -167,13 +241,20 @@ function ccp3o1_sanitize_carousels($input) {
 
     // Set defaults for other fields
     $carousel_id = uniqid('carousel_');
+    $speed = isset($new_carousel['speed']) ? absint($new_carousel['speed']) : 300;
+    $smooth_flag = !empty($new_carousel['smooth']) ? 1 : 0;
+    if ($smooth_flag && $speed < 600) {
+        // Auto-adjust speed for smoother transition if too low
+        $speed = 800;
+    }
     $carousels[$carousel_id] = [
         'items' => $items,
         'dimensions' => $dimensions,
         'visible_items' => isset($new_carousel['visible_items']) ? absint($new_carousel['visible_items']) : 3,
-        'speed' => isset($new_carousel['speed']) ? absint($new_carousel['speed']) : 300,
+        'speed' => $speed,
         'gap' => isset($new_carousel['gap']) ? absint($new_carousel['gap']) : 10,
-        'gap_color' => isset($new_carousel['gap_color']) ? sanitize_hex_color($new_carousel['gap_color']) : '#ffffff'
+        'gap_color' => isset($new_carousel['gap_color']) ? (sanitize_hex_color($new_carousel['gap_color']) ?: '#ffffff') : '#ffffff',
+        'smooth' => $smooth_flag
     ];
 
     // Force update to ensure save
@@ -205,6 +286,8 @@ function ccp3o1_carousel_fields() {
         <input type="number" name="ccp3o1_carousels[new_carousel][gap]" value="10" min="0" max="100" class="ccp3o1-input">
         <p><strong><span class="dashicons dashicons-art"></span> Gap Color:</strong></p>
         <input type="text" name="ccp3o1_carousels[new_carousel][gap_color]" class="ccp3o1-color-picker" value="#ffffff">
+        <p><strong><span class="dashicons dashicons-performance"></span> Smooth Carousel:</strong></p>
+        <label><input type="checkbox" name="ccp3o1_carousels[new_carousel][smooth]" value="1" /> Enable smoother transitions</label>
     </div>
     <script>
         jQuery(document).ready(function($) {
@@ -220,7 +303,8 @@ function ccp3o1_display_carousels() {
     // Fetch raw option value for debugging
     $raw_option = $wpdb->get_var("SELECT option_value FROM {$wpdb->options} WHERE option_name = 'ccp3o1_carousels'");
     error_log('Raw ccp3o1_carousels option: ' . $raw_option);
-    $carousels = get_option('ccp3o1_carousels', []);
+    $carousels_db = maybe_unserialize($raw_option);
+    $carousels = is_array($carousels_db) ? $carousels_db : get_option('ccp3o1_carousels', []);
     error_log('Parsed carousels: ' . print_r($carousels, true));
     if (!is_array($carousels) || empty($carousels)) {
         echo '<p class="ccp3o1-no-items">No carousels created yet.</p>';
@@ -236,6 +320,8 @@ function ccp3o1_display_carousels() {
         echo '<p><strong>Speed:</strong> ' . esc_html($carousel['speed']) . 'ms</p>';
         echo '<p><strong>Gap:</strong> ' . esc_html($carousel['gap']) . 'px</p>';
         echo '<p><strong>Gap Color:</strong> <span style="display:inline-block; width:20px; height:20px; background-color:' . esc_attr($carousel['gap_color']) . ';"></span> ' . esc_html($carousel['gap_color']) . '</p>';
+        $is_smooth = !empty($carousel['smooth']);
+        echo '<p><strong>Smooth:</strong> ' . ($is_smooth ? 'Enabled' : 'Disabled') . '</p>';
         echo '<p><strong>Items:</strong></p>';
         echo '<div class="ccp3o1-media-list">';
         foreach ($carousel['items'] as $item_id) {
@@ -249,12 +335,15 @@ function ccp3o1_display_carousels() {
             }
         }
         echo '</div>';
-        echo '<form method="post" action="' . admin_url('admin-post.php') . '" class="ccp3o1-delete-form">';
+        echo '<div style="display:flex; gap:10px; align-items:center; margin-top:10px;">';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=ccp3o1-custom-carousel&edit=' . urlencode($id))) . '" class="button ccp3o1-button"><span class="dashicons dashicons-edit"></span> Edit</a>';
+        echo '<form method="post" action="' . admin_url('admin-post.php') . '" class="ccp3o1-delete-form" style="display:inline;">';
         echo '<input type="hidden" name="action" value="ccp3o1_delete_carousel">';
         echo '<input type="hidden" name="carousel_id" value="' . esc_attr($id) . '">';
         echo wp_nonce_field('ccp3o1_delete_carousel_nonce', 'ccp3o1_nonce', true, false);
         echo '<button type="submit" class="button ccp3o1-button ccp3o1-delete-button"><span class="dashicons dashicons-trash"></span> Delete Carousel</button>';
         echo '</form>';
+        echo '</div>';
         echo '</div>';
     }
 }
@@ -337,7 +426,8 @@ function ccp3o1_carousel_shortcode($atts) {
     }
 
     $carousel = $carousels[$atts['id']];
-    $output = '<div class="ccp3o1-carousel" data-visible="' . esc_attr($carousel['visible_items']) . '" data-speed="' . esc_attr($carousel['speed']) . '" data-gap="' . esc_attr($carousel['gap']) . '" style="background-color:' . esc_attr($carousel['gap_color']) . ';">';
+    $smooth = !empty($carousel['smooth']) ? 1 : 0;
+    $output = '<div class="ccp3o1-carousel" data-visible="' . esc_attr($carousel['visible_items']) . '" data-speed="' . esc_attr($carousel['speed']) . '" data-gap="' . esc_attr($carousel['gap']) . '" data-smooth="' . esc_attr($smooth) . '" style="background-color:' . esc_attr($carousel['gap_color']) . ';">';
 
     foreach ($carousel['items'] as $item_id) {
         $url = wp_get_attachment_url($item_id);
@@ -358,4 +448,72 @@ function ccp3o1_carousel_shortcode($atts) {
     return $output;
 }
 add_shortcode('ccp3o1_custom_carousel', 'ccp3o1_carousel_shortcode');
+
+// Handle update (edit) of existing carousel
+function ccp3o1_update_carousel() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Insufficient permissions', 'custom-carousel-plugin'));
+    }
+
+    if (!isset($_POST['ccp3o1_update_nonce']) || !wp_verify_nonce($_POST['ccp3o1_update_nonce'], 'ccp3o1_update_carousel_nonce')) {
+        wp_die(__('Security check failed', 'custom-carousel-plugin'));
+    }
+
+    $carousel_id = isset($_POST['carousel_id']) ? sanitize_text_field(wp_unslash($_POST['carousel_id'])) : '';
+    $edit_raw = isset($_POST['ccp3o1_edit_carousel']) ? wp_unslash($_POST['ccp3o1_edit_carousel']) : [];
+    $edit = is_array($edit_raw) ? $edit_raw : [];
+
+    $carousels = get_option('ccp3o1_carousels', []);
+    if (!is_array($carousels) || !isset($carousels[$carousel_id])) {
+        wp_redirect(admin_url('admin.php?page=ccp3o1-custom-carousel'));
+        exit;
+    }
+
+    // Sanitize fields similar to creation
+    $items = [];
+    if (!empty($edit['items']) && is_string($edit['items'])) {
+        $item_ids = array_filter(array_map('absint', explode(',', $edit['items'])));
+        foreach ($item_ids as $id) {
+            if (wp_get_attachment_url($id)) {
+                $items[] = $id;
+            }
+        }
+    }
+    $dimensions = isset($edit['dimensions']) ? sanitize_text_field($edit['dimensions']) : '500x800';
+    if (!preg_match('/^\d+x\d+$/', $dimensions)) {
+        $dimensions = '500x800';
+    }
+    $visible_items = isset($edit['visible_items']) ? absint($edit['visible_items']) : 3;
+    $speed = isset($edit['speed']) ? absint($edit['speed']) : 300;
+    $gap = isset($edit['gap']) ? absint($edit['gap']) : 10;
+    $gap_color_input = isset($edit['gap_color']) ? sanitize_hex_color($edit['gap_color']) : '';
+    $gap_color = $gap_color_input ? $gap_color_input : '#ffffff';
+    $smooth = !empty($edit['smooth']) ? 1 : 0;
+    if ($smooth && $speed < 600) {
+        // Auto-adjust for smooth transitions if too low
+        $speed = 800;
+    }
+
+    // Update only provided values; keep existing items if none were provided
+    if (!empty($items)) {
+        $carousels[$carousel_id]['items'] = $items;
+    }
+    $carousels[$carousel_id]['dimensions'] = $dimensions;
+    $carousels[$carousel_id]['visible_items'] = $visible_items;
+    $carousels[$carousel_id]['speed'] = $speed;
+    $carousels[$carousel_id]['gap'] = $gap;
+    $carousels[$carousel_id]['gap_color'] = $gap_color;
+    $carousels[$carousel_id]['smooth'] = $smooth ? 1 : 0;
+
+    update_option('ccp3o1_carousels', $carousels);
+    // Ensure fresh read even with persistent object cache
+    if (function_exists('wp_cache_delete')) {
+        wp_cache_delete('ccp3o1_carousels', 'options');
+        wp_cache_delete('alloptions', 'options');
+    }
+
+    wp_redirect(admin_url('admin.php?page=ccp3o1-custom-carousel&ccp3o1_action=updated&t=' . time()));
+    exit;
+}
+add_action('admin_post_ccp3o1_update_carousel', 'ccp3o1_update_carousel');
 ?>
